@@ -140,3 +140,4 @@ vite.config.ts.timestamp-*
 
 
 *.cpython-314.pyc
+database.db
