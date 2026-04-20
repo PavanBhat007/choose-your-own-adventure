@@ -8,7 +8,7 @@ class Settings(BaseSettings):
     DEBUG: bool = False
     DATABASE_URL: str
     ALLOWED_ORIGINS: str = ""
-    GOOGLE_GEMINI_API_KEY: str
+    GROQ_API_KEY: str
 
     # convert comma-separated string of origins into a list of strings
     @field_validator("ALLOWED_ORIGINS")

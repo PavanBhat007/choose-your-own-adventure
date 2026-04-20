@@ -1,7 +1,7 @@
 from sqlalchemy.orm import Session
 from dotenv import load_dotenv
 
-from langchain_openai import ChatOpenAI
+from langchain_groq import ChatGroq
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.output_parsers import PydanticOutputParser
 
@@ -16,7 +16,7 @@ class StoryGenerator:
 
     @classmethod
     def _get_llm(cls):
-        return ChatOpenAI(model="gtp-4-turbo")
+        return ChatGroq(model="llama-3.3-70b-versatile", temperature=0.7)
 
     @classmethod
     def generate_story(
@@ -25,19 +25,42 @@ class StoryGenerator:
         llm = cls._get_llm()
         story_parser = PydanticOutputParser(pydantic_object=StoryLLMResponse)
 
+        format_instructions = story_parser.get_format_instructions()
         prompt = ChatPromptTemplate.from_messages(
             [
                 ("system", STORY_PROMPT),
-                ("human", f"Create the story with this theme: {theme}"),
-            ]
-        ).partial(format_instructions=story_parser.get_format_instructions())
+                (
+                    "human",
+                    """
+                        Create the story with this theme: {theme}
 
-        raw_response = llm.invoke(prompt.invoke({}))
+                        IMPORTANT:
+                        - Return ONLY valid JSON
+                        - No markdown
+                        - No explanations
+                        - Follow this schema strictly:
+
+                        {format_instructions}
+                    """,
+                ),
+            ]
+        )
+
+        chain_input = {
+            "theme": theme,
+            "format_instructions": format_instructions,
+        }
+
+        raw_response = llm.invoke(prompt.invoke(chain_input))
         response_text = raw_response
         if hasattr(raw_response, "content"):
             response_text = raw_response.content
 
-        story_structure = story_parser.parse(response_text)
+        try:
+            story_structure = story_parser.parse(response_text)
+        except Exception as e:
+            raise ValueError(f"LLM output parsing failed:\n{response_text}") from e
+
         story_db = Story(title=story_structure.title, session_id=session_id)
         db.add(story_db)
         db.flush()
@@ -94,7 +117,7 @@ class StoryGenerator:
                     {"text": option_data.text, "node_id": child_node.id}
                 )
 
-                node.options = options_list
+            node.options = options_list
 
         db.flush()
         return node

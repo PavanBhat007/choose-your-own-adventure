@@ -83,7 +83,7 @@ def get_complete_story(story_id: int, db: Session = Depends(get_db)):
     if not story:
         raise HTTPException(status_code=404, detail="Story not found")
 
-    return story
+    return build_complete_story_tree(db, story)
 
 
 def build_complete_story_tree(db: Session, story: Story) -> CompleteStoryResponse:
@@ -94,7 +94,7 @@ def build_complete_story_tree(db: Session, story: Story) -> CompleteStoryRespons
         node_response = CompleteStoryNodeResponse(
             id=node.id,
             content=node.content,
-            id_ending=node.is_ending,
+            is_ending=node.is_ending,
             is_winning_ending=node.is_winning_ending,
             options=node.options,
         )
