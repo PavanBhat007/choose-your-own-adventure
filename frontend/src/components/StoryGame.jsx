@@ -18,8 +18,8 @@ function StoryGame({ story, onNewStory }) {
     if (currentNodeId && story && story.all_nodes) {
       const node = story.all_nodes[currentNodeId];
       setCurrentNode(node);
-      setIsEnding(node.isEnding);
-      setIsWinningEnding(node.isWinningEnding);
+      setIsEnding(node.is_ending);
+      setIsWinningEnding(node.is_winning_ending);
 
       if (!node.isEnding && node.options && node.options.length > 0) {
         setOptions(node.options);
@@ -32,7 +32,7 @@ function StoryGame({ story, onNewStory }) {
   };
 
   const restartStory = () => {
-    if (story & story.root_node) {
+    if (story && story.root_node) {      
       setCurrentNodeId(story.root_node.id);
     }
   };
